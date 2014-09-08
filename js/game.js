@@ -13,6 +13,7 @@ var angle = 0.75 * Math.PI;
 var blocks = [];
 var d0 = [];
 var meteor = [];
+var score = 0;
 
 var canvas = document.getElementById('canvas2d');
 var background = document.getElementById('background');
@@ -27,28 +28,30 @@ background.height = 640;
 var centerX = canvas.width / 2;
 var centerY = canvas.height / 2;
 
-// Earth
-var e_grd_radial = ctx.createRadialGradient(centerX,centerY,10,centerX,centerY,25);
-	e_grd_radial.addColorStop(0.10, 'rgba(61,204,248,0)');
-	e_grd_radial.addColorStop(0.30, 'rgba(61,204,248,0.1)');
-	e_grd_radial.addColorStop(0.60, 'rgba(61,204,248,0.6)');
-	e_grd_radial.addColorStop(0.90, 'rgba(61,204,248,0.1)');
-	e_grd_radial.addColorStop(1.00, 'rgba(255,255,255,0)');
-bg_ctx.lineWidth = 1;
-bg_ctx.strokeStyle = 'rgba(61,204,248,0.4)';
-bg_ctx.beginPath();
-bg_ctx.arc( centerX, centerY, 30, 0, 2*Math.PI );
-bg_ctx.fillStyle = e_grd_radial;
-bg_ctx.fill();
-bg_ctx.beginPath();
-bg_ctx.arc( centerX, centerY, 10, 0, 2*Math.PI );
-bg_ctx.fillStyle = 'rgba(61,204,248,0.2)';
-bg_ctx.fill();
-bg_ctx.stroke();
-
-
 function start() {
+	bg_ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+	// Earth
+	var e_grd_radial = ctx.createRadialGradient(centerX,centerY,10,centerX,centerY,25);
+		e_grd_radial.addColorStop(0.10, 'rgba(61,204,248,0)');
+		e_grd_radial.addColorStop(0.30, 'rgba(61,204,248,0.1)');
+		e_grd_radial.addColorStop(0.60, 'rgba(61,204,248,0.6)');
+		e_grd_radial.addColorStop(0.90, 'rgba(61,204,248,0.1)');
+		e_grd_radial.addColorStop(1.00, 'rgba(255,255,255,0)');
+	bg_ctx.lineWidth = 1;
+	bg_ctx.strokeStyle = 'rgba(61,204,248,0.4)';
+	bg_ctx.beginPath();
+	bg_ctx.arc( centerX, centerY, 30, 0, 2*Math.PI );
+	bg_ctx.fillStyle = e_grd_radial;
+	bg_ctx.fill();
+	bg_ctx.beginPath();
+	bg_ctx.arc( centerX, centerY, 10, 0, 2*Math.PI );
+	bg_ctx.fillStyle = 'rgba(61,204,248,0.2)';
+	bg_ctx.fill();
+	bg_ctx.stroke();
+
 	d0 = new Derivative();
+	score = 0;
 	var
 			px = centerX
 		,	py = 50
@@ -169,6 +172,10 @@ var blocksStep = function(){
 		if(Math.sqrt(bx+by) <= blocks[i].radius){
 			blocks[i].color = '0,255,0';	
 			crossing = new Vec( blocks[i].position.x,blocks[i].position.y );
+			score += (100 * (-Math.round((Math.sqrt(bx+by) - blocks[i].radius))/10)); 
+			var str_score = Array( 10 - score.toString().length).join("0") + score.toString();
+
+			document.getElementById('score').textContent = str_score;
 		} else {
 			blocks[i].color = '0,0,0';
 		}
@@ -247,7 +254,8 @@ var motion = function() {
 		meteor.velocity.y *= -1;
 
 	var crossing = blocksStep();
-	center = crossing ? crossing : center;
+	center = crossing ? crossing : center;	
+
 	meteorStep( center, meteor);	
 
 	// Meteor[path]
@@ -284,9 +292,10 @@ canvas.onmousemove = function(move){
 	angle = Math.atan2(move.offsetY - centerY, move.offsetX - centerX) * 180/Math.PI;
 }
 
-window.onkeydown = function (press) {	
+window.onkeydown = function (press) {
 	if(press.keyCode == 83) {
 		if(!bGAME && !bPAUSE){
+			document.getElementById('game::info').style.display = 'none';
 			bGAME = true;
 			start();
 		}
@@ -294,7 +303,15 @@ window.onkeydown = function (press) {
 	} else if(press.keyCode == 80) {
 		bGAME = bGAME ? false : true;
 		bPAUSE = bPAUSE ? false : true;
-		if(bGAME) requestAnimationFrame(render);
+		document.getElementById('game::info').style.display = 'block';
+		if(bGAME){ 
+			document.getElementById('game::info').style.display = 'none';
+			requestAnimationFrame(render);
+		}
+	} else if(press.keyCode == 82) {
+		bGAME = false; bPAUSE = false;
+		document.getElementById('game::info').style.display = 'none';
+		setTimeout(function() { bGAME = true; start(); }, 200);
 	}
 };
 
