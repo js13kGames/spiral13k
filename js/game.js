@@ -3,7 +3,6 @@ var fEARTH_G = 3960.0;
 var dPI = 2*Math.PI;
 
 var bGAME = false;
-var bPAUSE = false;
 var bMOON_G = false;
 var bBLOCK_G = false;
 
@@ -29,6 +28,9 @@ var centerX = canvas.width / 2;
 var centerY = canvas.height / 2;
 
 function start() {
+	document.getElementById('game::over').style.display = 'none';
+	document.getElementById('score').textContent = Array( 10 ).join("0");
+
 	bg_ctx.clearRect(0, 0, canvas.width, canvas.height);
 
 	// Earth
@@ -51,7 +53,7 @@ function start() {
 	bg_ctx.stroke();
 
 	d0 = new Derivative();
-	score = 0;
+	score = 0;	
 	var
 			px = centerX
 		,	py = 50
@@ -127,9 +129,9 @@ function render () {
 
 	var m_grd_radial = ctx.createRadialGradient(Xm,Ym,10,Xm,Ym,55);
 		m_grd_radial.addColorStop(0.40, 'rgba(255,255,255,0)');
-		m_grd_radial.addColorStop(0.75, 'rgba(0,0,0,.1)');
-		m_grd_radial.addColorStop(0.80, 'rgba(0,0,0,.25)');
-		m_grd_radial.addColorStop(0.85, 'rgba(0,0,0,.1)');
+		m_grd_radial.addColorStop(0.75, 'rgba(0,0,0,.2)');
+		m_grd_radial.addColorStop(0.80, 'rgba(0,0,0,.45)');
+		m_grd_radial.addColorStop(0.85, 'rgba(0,0,0,.2)');
 		m_grd_radial.addColorStop(1.00, 'rgba(255,255,255,0)');
 
 	ctx.beginPath();
@@ -139,7 +141,7 @@ function render () {
 
 	ctx.beginPath();
 	ctx.strokeStyle = 'rgba(0, 0, 0,.15)';
-	ctx.fillStyle = 'rgba(0,0,0,.25)';
+	ctx.fillStyle = 'rgba(0,0,0,.65)';
 	ctx.lineWidth = 5;
 	ctx.arc( Xm, Ym, 15, 0, dPI );
 	ctx.fill();
@@ -152,6 +154,8 @@ function render () {
 	ctx.stroke();
 
 	motion();
+
+	gameover();
 
 	if(bGAME) requestAnimationFrame(render);
 }
@@ -285,31 +289,33 @@ var motion = function() {
 	meteor.velocity.y = meteor.velocity.y > 5 ? 5 : meteor.velocity.y;
 
 };
+var gameover = function(){
+	if((Math.sqrt(Math.pow(centerX - meteor.position.x, 2) + Math.pow(centerY - meteor.position.y, 2)) <= 25)){
+		bGAME = false;
+		document.getElementById('game::over').style.display = 'block';
+		document.getElementById('game::info').style.display = 'block';
+		document.getElementById('points').textContent = score;
+	}
+}
 
 
 // ...
 canvas.onmousemove = function(move){
+	move.offsetX = move.offsetX | move.layerX;
+	move.offsetY = move.offsetY | move.layerY;
 	angle = Math.atan2(move.offsetY - centerY, move.offsetX - centerX) * 180/Math.PI;
 }
 
 window.onkeydown = function (press) {
 	if(press.keyCode == 83) {
-		if(!bGAME && !bPAUSE){
+		if(!bGAME){
 			document.getElementById('game::info').style.display = 'none';
 			bGAME = true;
 			start();
 		}
 
-	} else if(press.keyCode == 80) {
-		bGAME = bGAME ? false : true;
-		bPAUSE = bPAUSE ? false : true;
-		document.getElementById('game::info').style.display = 'block';
-		if(bGAME){ 
-			document.getElementById('game::info').style.display = 'none';
-			requestAnimationFrame(render);
-		}
 	} else if(press.keyCode == 82) {
-		bGAME = false; bPAUSE = false;
+		bGAME = false; 
 		document.getElementById('game::info').style.display = 'none';
 		setTimeout(function() { bGAME = true; start(); }, 200);
 	}
@@ -362,11 +368,6 @@ var Vec = function(x, y){
 }
 
 Vec.prototype = {
-	isub: function(other){
-		this.x -= other.x;
-		this.y -= other.y;
-		return this;
-	},
 	sub: function(other){
 		return new Vec(
 			this.x - other.x,
@@ -396,41 +397,14 @@ Vec.prototype = {
 			this.y * scalar
 		)
 	},
-	idiv: function(scalar){
-		this.x /= scalar;
-		this.y /= scalar;
-		return this;
-	},
-	div: function(scalar){
-		return new Vec(
-			this.x / scalar,
-			this.y / scalar
-		)
-	},
-
 	normalized: function(){
 		var x=this.x, y=this.y;
 		var length = Math.sqrt(x*x + y*y)
 		return new Vec(x/length, y/length);
 	},
-	normalize: function(){
-		var x=this.x, y=this.y;
-		var length = Math.sqrt(x*x + y*y)
-		this.x = x/length;
-		this.y = y/length;
-		return this;
-	},
-
 	length: function(){
 		return Math.sqrt(this.x*this.x + this.y*this.y);
 	},
-
-	distance: function(other){
-		var x = this.x - other.x;
-		var y = this.y - other.y;
-		return Math.sqrt(x*x + y*y);
-	},
-
 	copy: function(){
 		return new Vec(this.x, this.y);
 	}
